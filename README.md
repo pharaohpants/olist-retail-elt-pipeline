@@ -189,19 +189,3 @@ Struktur penting:
 - SQL/dq: SQL quality checks
 - SQL/marts: SQL layer mart
 
-## 13) Improvement Ideas
-Pengembangan lanjutan yang direkomendasikan:
-
-- Tambah data contract untuk validasi schema source
-- Tambah unit test untuk helper Python dan SQL smoke test
-- Materialized view + refresh strategy untuk mart besar
-- Tambah scheduler production (cron/Airflow/Prefect) dan retry policy granular
-
-## 14) Conclusion
-Pipeline sudah memenuhi kebutuhan utama tugas:
-
-- SCD Type 2 pada dimensi bisnis utama
-- ELT terstruktur dari source ke warehouse
-- Orkestrasi dependency end-to-end dengan Luigi
-- Data quality gate sebelum serve layer
-- Mart view siap pakai untuk analitik
