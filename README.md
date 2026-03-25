@@ -22,6 +22,8 @@ Berikut simulasi pertanyaan saat requirement meeting beserta kemungkinan jawaban
 
 ## 3) SCD Strategy
 
+```mermaid
+flowchart LR
 A[Data source terbaru] --> B{Ada perubahan atribut?}
 B -->|Tidak| C[Tidak ada row baru]
 B -->|Ya| D[Tutup row lama]
@@ -32,6 +34,8 @@ F --> G
 G --> H[effective_date = hari ini]
 G --> I[end_date = 9999-12-31]
 G --> J[is_current = true]
+```
+
 Strategi SCD yang dipilih:
 
 - SCD Type 2 untuk dim_customer
@@ -73,17 +77,8 @@ Tabel fakta:
 ## 5) ELT Workflow
 Alur teknis pipeline:
 
-flowchart LR
-A [Data source terbaru] --> B{Ada perubahan atribut?}
-B -->|Tidak| C[Tidak ada row baru]
-B -->|Ya| D[Tutup row lama]
-D --> E[end_date = hari ini - 1]
-D --> F[is_current = false]
-E --> G[Insert row baru]
-F --> G
-G --> H[effective_date = hari ini]
-G --> I[end_date = 9999-12-31]
-G --> J[is_current = true]
+<img width="2032" height="1921" alt="image" src="https://github.com/user-attachments/assets/aee97cda-ef98-4c79-b2b8-c814d1b82075" />
+
 Penjelasan tiap layer:
 
 1. ExtractSource
@@ -168,39 +163,4 @@ Atau jalankan task terminal saja:
 
 python pipeline.py NotifySuccess --run-date 2026-03-16 --local-scheduler
 
-## 10) Environment Variables
-Contoh konfigurasi di file .env:
-
-- SRC_POSTGRES_DB
-- SRC_POSTGRES_HOST
-- SRC_POSTGRES_USER
-- SRC_POSTGRES_PASSWORD
-- SRC_POSTGRES_PORT
-- DWH_POSTGRES_DB
-- DWH_POSTGRES_HOST
-- DWH_POSTGRES_USER
-- DWH_POSTGRES_PASSWORD
-- DWH_POSTGRES_PORT
-- SENTRY_DSN (optional)
-- ALERT_WEBHOOK_URL (optional)
-- LOAD_CHUNK_SIZE (optional, default 5000)
-
-## 11) Error Handling & Observability
-Mekanisme observability:
-
-- Structured logging per task
-- notify_error pada exception
-- Integrasi Sentry (opsional)
-- Webhook alert (opsional)
-
-## 12) Project Structure
-Struktur penting:
-
-- pipeline.py: orchestration + logic task Luigi
-- helper/source_init/init.sql: bootstrap source database
-- helper/dwh_init/init.sql: bootstrap warehouse database
-- SQL/dimensions: SQL dimensi dan SCD
-- SQL/facts: SQL fakta
-- SQL/dq: SQL quality checks
-- SQL/marts: SQL layer mart
 
