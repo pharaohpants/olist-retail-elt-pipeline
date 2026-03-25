@@ -77,7 +77,7 @@ Tabel fakta:
 ## 5) ELT Workflow
 Alur teknis pipeline:
 
-[ELT ollist Workflow.png](https://github.com/pharaohpants/olist-retail-elt-pipeline/blob/4282a79326db7471aa0002d8758c787679b44266/ELT%20ollist%20Workflow.png)
+<img width="2032" height="1921" alt="image" src="https://github.com/user-attachments/assets/aee97cda-ef98-4c79-b2b8-c814d1b82075" />
 
 Penjelasan tiap layer:
 
