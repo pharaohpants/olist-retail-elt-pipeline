@@ -21,6 +21,16 @@ Berikut simulasi pertanyaan saat requirement meeting beserta kemungkinan jawaban
 | 8 | Apakah pipeline harus idempotent? | Ya, rerun tanggal yang sama harus aman dan menghasilkan state yang konsisten. |
 
 ## 3) SCD Strategy
+A[Data source terbaru] --> B{Ada perubahan atribut?}
+B -->|Tidak| C[Tidak ada row baru]
+B -->|Ya| D[Tutup row lama]
+D --> E[end_date = hari ini - 1]
+D --> F[is_current = false]
+E --> G[Insert row baru]
+F --> G
+G --> H[effective_date = hari ini]
+G --> I[end_date = 9999-12-31]
+G --> J[is_current = true]
 Strategi SCD yang dipilih:
 
 - SCD Type 2 untuk dim_customer
@@ -62,13 +72,18 @@ Tabel fakta:
 ## 5) ELT Workflow
 Alur teknis pipeline:
 
-1. ExtractSource
-2. LoadStaging
-3. TransformWarehouse
-4. DataQualityCheck
-5. ServeMart
-6. NotifySuccess
-
+A[Source PostgreSQL] --> B[ExtractSource]
+B --> C[CSV + Manifest]
+C --> D[LoadStaging]
+D --> E[Staging Schema]
+E --> F[TransformWarehouse]
+F --> G[Dimension Tables]
+F --> H[Fact Tables]
+G --> I[DataQualityCheck]
+H --> I
+I -->|Lolos semua check| J[ServeMart]
+J --> K[Data Mart Views]
+K --> L[NotifySuccess]
 Penjelasan tiap layer:
 
 1. ExtractSource
