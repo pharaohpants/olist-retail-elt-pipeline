@@ -7,60 +7,60 @@ Olist, a major online marketplace in Brazil, connects small businesses to custom
 To achieve these objectives, Olist needs a data infrastructure that allows them to store, manage, and analyze large volumes of diverse data efficiently. Olist requires a dedicated data warehouse to support advanced analytics and data-driven decision-making.
 
 ## 2) Requirements Gathering (Stakeholder Q&A)
-Berikut simulasi pertanyaan saat requirement meeting beserta kemungkinan jawaban stakeholder:
+Below is a simulation of questions asked during the requirements meeting, along with possible stakeholder answers:
 
-| No | Pertanyaan | Kemungkinan Jawaban Stakeholder |
+| No | Question | Possible Stakeholder Answer |
 |---|---|---|
-| 1 | Apakah perubahan atribut customer/seller/product perlu histori? | Ya, histori perlu agar analisis tren tetap konsisten terhadap perubahan data master. |
-| 2 | Atribut mana yang paling kritikal untuk histori customer? | Lokasi customer (city/state/zip) karena terkait analisis performa regional. |
-| 3 | Atribut mana yang kritikal untuk histori seller? | Lokasi seller karena memengaruhi lead time dan kualitas pengiriman. |
-| 4 | Atribut mana yang kritikal untuk histori product? | Kategori dan dimensi produk (berat/ukuran) untuk analisis performa produk jangka panjang. |
-| 5 | Grain fact sales yang diinginkan? | Satu baris per order item agar bisa hitung revenue dan quantity secara detail. |
-| 6 | Validasi data minimum apa yang harus ada? | Tidak boleh ada duplicate current row pada SCD dimensi, FK fact tidak boleh null, dan lead time tidak boleh negatif yang tidak logis. |
-| 7 | Apakah data mart diperlukan? | Ya, perlu view agregat siap pakai untuk dashboard harian, ringkasan customer, dan performa produk. |
-| 8 | Apakah pipeline harus idempotent? | Ya, rerun tanggal yang sama harus aman dan menghasilkan state yang konsisten. |
+| 1 | Do changes in customer/seller/product attributes need historical tracking? | Yes, history is needed so trend analysis remains consistent when master data changes. |
+| 2 | Which attributes are most critical for customer history? | Customer location (city/state/zip), because it is related to regional performance analysis. |
+| 3 | Which attributes are most critical for seller history? | Seller location, because it affects lead time and delivery quality. |
+| 4 | Which attributes are most critical for product history? | Product category and dimensions (weight/size) for long-term product performance analysis. |
+| 5 | What is the desired grain of fact sales? | One row per order item, so revenue and quantity can be calculated in detail. |
+| 6 | What minimum data validation rules are required? | There must be no duplicate current row in SCD dimensions, fact FKs must not be null, and delivery lead time must not be illogically negative. |
+| 7 | Is a data mart required? | Yes, ready-to-use aggregate views are needed for daily dashboards, customer summaries, and product performance. |
+| 8 | Must the pipeline be idempotent? | Yes, rerunning the same date must be safe and produce a consistent state. |
 
 ## 3) SCD Strategy
 
 ```mermaid
 flowchart LR
-A[Data source terbaru] --> B{Ada perubahan atribut?}
-B -->|Tidak| C[Tidak ada row baru]
-B -->|Ya| D[Tutup row lama]
-D --> E[end_date = hari ini - 1]
+A[Latest data source] --> B{Any attribute changes?}
+B -->|No| C[No new row]
+B -->|Yes| D[Close old row]
+D --> E[end_date = today - 1]
 D --> F[is_current = false]
-E --> G[Insert row baru]
+E --> G[Insert new row]
 F --> G
-G --> H[effective_date = hari ini]
+G --> H[effective_date = today]
 G --> I[end_date = 9999-12-31]
 G --> J[is_current = true]
 ```
 
-Strategi SCD yang dipilih:
+Selected SCD strategy:
 
-- SCD Type 2 untuk dim_customer
-- SCD Type 2 untuk dim_product
-- SCD Type 2 untuk dim_seller
+- SCD Type 2 for dim_customer
+- SCD Type 2 for dim_product
+- SCD Type 2 for dim_seller
 
-Alasan pemilihan:
+Why this strategy was chosen:
 
-- Bisnis membutuhkan histori perubahan atribut penting (lokasi dan karakteristik produk).
-- Analisis historis harus mengikuti kondisi dimensi pada saat transaksi terjadi.
-- Type 2 mendukung analitik longitudinal tanpa kehilangan jejak perubahan.
+- The business needs history of important attribute changes (location and product characteristics).
+- Historical analysis must follow the dimension state at the time a transaction happened.
+- Type 2 supports longitudinal analytics without losing change history.
 
-Kolom SCD yang digunakan di dimensi:
+SCD columns used in dimensions:
 
 - effective_date
 - end_date
 - is_current
 
 ## 4) Data Model Ringkas
-Schema utama:
+Main schema:
 
-- staging: mirror data source
-- dwh: dimensi + fakta
+- staging: mirror of source data
+- dwh: dimensions + facts
 
-Tabel dimensi:
+Dimension tables:
 
 - dwh.dim_date
 - dwh.dim_location
@@ -68,69 +68,69 @@ Tabel dimensi:
 - dwh.dim_product (SCD2)
 - dwh.dim_seller (SCD2)
 
-Tabel fakta:
+Fact tables:
 
 - dwh.fact_sales
 - dwh.fact_delivery
 - dwh.fact_review
 
 ## 5) ELT Workflow
-Alur teknis pipeline:
+Pipeline technical flow:
 
 <img width="2032" height="1921" alt="image" src="https://github.com/user-attachments/assets/aee97cda-ef98-4c79-b2b8-c814d1b82075" />
 
-Penjelasan tiap layer:
+Layer-by-layer explanation:
 
 1. ExtractSource
-	- Ambil data dari source PostgreSQL berdasarkan env SRC_*
-	- Simpan CSV per tabel ke artifacts/extract
-	- Simpan manifest jumlah baris per tabel
+	- Extract data from PostgreSQL source based on `SRC_*` env variables
+	- Save one CSV per table to `artifacts/extract`
+	- Save a manifest with row counts per table
 
 2. LoadStaging
-	- TRUNCATE seluruh tabel staging
-	- Load CSV ke staging
-	- Mapping kolom defensif (kolom ekstra di source diabaikan saat tidak ada di staging)
-	- Validasi row count extract vs staging
+	- TRUNCATE all staging tables
+	- Load CSV files into staging
+	- Use defensive column mapping (extra source columns are ignored if not present in staging)
+	- Validate row counts between extract and staging
 
 3. TransformWarehouse
-	- Jalankan SQL dimensi (termasuk close/open SCD2)
-	- Jalankan SQL fakta
+	- Run dimension SQL (including SCD2 close/open logic)
+	- Run fact SQL
 
 4. DataQualityCheck
-	- Menjalankan semua SQL checks pada folder SQL/dq
-	- Tiap check harus menghasilkan COUNT = 0
+	- Run all SQL checks in `SQL/dq`
+	- Each check must return `COUNT = 0`
 
 5. ServeMart
-	- Jalankan SQL pada folder SQL/marts
-	- Membuat view agregasi untuk kebutuhan BI
+	- Run SQL in `SQL/marts`
+	- Create aggregate views for BI needs
 
 6. NotifySuccess
-	- Logging sukses pipeline
-	- Optional kirim webhook bila URL tersedia
+	- Log successful pipeline completion
+	- Optionally send webhook if URL is provided
 
 ## 6) DQ Rules Implemented
-Rule yang dijalankan:
+Implemented rules:
 
-- Duplicate current row pada dim_customer
-- Duplicate current row pada dim_product
-- Duplicate current row pada dim_seller
-- Null foreign keys pada fact_sales
+- Duplicate current row in dim_customer
+- Duplicate current row in dim_product
+- Duplicate current row in dim_seller
+- Null foreign keys in fact_sales
 - Negative delivery lead time
 
 ## 7) Mart Layer
-View mart yang tersedia:
+Available mart views:
 
 - SQL/marts/01_dm_daily_sales.sql
 - SQL/marts/02_dm_customer_summary.sql
 - SQL/marts/03_dm_product_performance.sql
 
-Tujuan mart:
+Mart goals:
 
-- Menyediakan dataset siap konsumsi untuk dashboard dan reporting
-- Mengurangi kompleksitas query langsung ke fact/dim mentah
+- Provide ready-to-use datasets for dashboards and reporting
+- Reduce query complexity on raw fact/dim tables
 
 ## 8) Orchestration (Luigi)
-Entrypoint utama:
+Main entrypoint:
 
 - ELTPipeline (wrapper task)
 
@@ -145,21 +145,21 @@ Dependency chain:
 - ExtractSource
 
 ## 9) Cara Menjalankan
-### 9.1 Jalankan database (Docker)
+### 9.1 Run database (Docker)
 
-Gunakan docker compose pada root project.
+Use docker compose from the project root.
 
-### 9.2 Install dependency Python
+### 9.2 Install Python dependencies
 
-Gunakan virtual environment, lalu install requirements.txt.
+Use a virtual environment, then install `requirements.txt`.
 
-### 9.3 Jalankan full pipeline
+### 9.3 Run full pipeline
 
-Contoh command:
+Example command:
 
 python pipeline.py ELTPipeline --run-date 2026-03-16 --local-scheduler
 
-Atau jalankan task terminal saja:
+Or run the final task only:
 
 python pipeline.py NotifySuccess --run-date 2026-03-16 --local-scheduler
 
