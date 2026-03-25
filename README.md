@@ -77,14 +77,7 @@ Tabel fakta:
 ## 5) ELT Workflow
 Alur teknis pipeline:
 
-```mermaid
-flowchart TD
-A[ExtractSource] --> B[LoadStaging]
-B --> C[TransformWarehouse]
-C --> D[DataQualityCheck]
-D --> E[ServeMart]
-E --> F[NotifySuccess]
-```
+![image](ELT ollist Workflow.png)
 
 Penjelasan tiap layer:
 
