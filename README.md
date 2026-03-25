@@ -170,39 +170,4 @@ Atau jalankan task terminal saja:
 
 python pipeline.py NotifySuccess --run-date 2026-03-16 --local-scheduler
 
-## 10) Environment Variables
-Contoh konfigurasi di file .env:
-
-- SRC_POSTGRES_DB
-- SRC_POSTGRES_HOST
-- SRC_POSTGRES_USER
-- SRC_POSTGRES_PASSWORD
-- SRC_POSTGRES_PORT
-- DWH_POSTGRES_DB
-- DWH_POSTGRES_HOST
-- DWH_POSTGRES_USER
-- DWH_POSTGRES_PASSWORD
-- DWH_POSTGRES_PORT
-- SENTRY_DSN (optional)
-- ALERT_WEBHOOK_URL (optional)
-- LOAD_CHUNK_SIZE (optional, default 5000)
-
-## 11) Error Handling & Observability
-Mekanisme observability:
-
-- Structured logging per task
-- notify_error pada exception
-- Integrasi Sentry (opsional)
-- Webhook alert (opsional)
-
-## 12) Project Structure
-Struktur penting:
-
-- pipeline.py: orchestration + logic task Luigi
-- helper/source_init/init.sql: bootstrap source database
-- helper/dwh_init/init.sql: bootstrap warehouse database
-- SQL/dimensions: SQL dimensi dan SCD
-- SQL/facts: SQL fakta
-- SQL/dq: SQL quality checks
-- SQL/marts: SQL layer mart
 
