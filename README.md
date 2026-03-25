@@ -72,18 +72,17 @@ Tabel fakta:
 ## 5) ELT Workflow
 Alur teknis pipeline:
 
-A[Source PostgreSQL] --> B[ExtractSource]
-B --> C[CSV + Manifest]
-C --> D[LoadStaging]
-D --> E[Staging Schema]
-E --> F[TransformWarehouse]
-F --> G[Dimension Tables]
-F --> H[Fact Tables]
-G --> I[DataQualityCheck]
-H --> I
-I -->|Lolos semua check| J[ServeMart]
-J --> K[Data Mart Views]
-K --> L[NotifySuccess]
+flowchart LR
+A [Data source terbaru] --> B{Ada perubahan atribut?}
+B -->|Tidak| C[Tidak ada row baru]
+B -->|Ya| D[Tutup row lama]
+D --> E[end_date = hari ini - 1]
+D --> F[is_current = false]
+E --> G[Insert row baru]
+F --> G
+G --> H[effective_date = hari ini]
+G --> I[end_date = 9999-12-31]
+G --> J[is_current = true]
 Penjelasan tiap layer:
 
 1. ExtractSource
