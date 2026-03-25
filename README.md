@@ -21,6 +21,8 @@ Berikut simulasi pertanyaan saat requirement meeting beserta kemungkinan jawaban
 | 8 | Apakah pipeline harus idempotent? | Ya, rerun tanggal yang sama harus aman dan menghasilkan state yang konsisten. |
 
 ## 3) SCD Strategy
+```markdown
+```mermaid
 A[Data source terbaru] --> B{Ada perubahan atribut?}
 B -->|Tidak| C[Tidak ada row baru]
 B -->|Ya| D[Tutup row lama]
@@ -71,7 +73,7 @@ Tabel fakta:
 
 ## 5) ELT Workflow
 Alur teknis pipeline:
-
+```mermaid
 flowchart LR
 A [Data source terbaru] --> B{Ada perubahan atribut?}
 B -->|Tidak| C[Tidak ada row baru]
