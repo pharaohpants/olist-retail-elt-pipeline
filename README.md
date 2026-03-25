@@ -22,6 +22,8 @@ Berikut simulasi pertanyaan saat requirement meeting beserta kemungkinan jawaban
 
 ## 3) SCD Strategy
 
+```mermaid
+flowchart LR
 A[Data source terbaru] --> B{Ada perubahan atribut?}
 B -->|Tidak| C[Tidak ada row baru]
 B -->|Ya| D[Tutup row lama]
@@ -32,6 +34,8 @@ F --> G
 G --> H[effective_date = hari ini]
 G --> I[end_date = 9999-12-31]
 G --> J[is_current = true]
+```
+
 Strategi SCD yang dipilih:
 
 - SCD Type 2 untuk dim_customer
@@ -73,17 +77,15 @@ Tabel fakta:
 ## 5) ELT Workflow
 Alur teknis pipeline:
 
-flowchart LR
-A [Data source terbaru] --> B{Ada perubahan atribut?}
-B -->|Tidak| C[Tidak ada row baru]
-B -->|Ya| D[Tutup row lama]
-D --> E[end_date = hari ini - 1]
-D --> F[is_current = false]
-E --> G[Insert row baru]
-F --> G
-G --> H[effective_date = hari ini]
-G --> I[end_date = 9999-12-31]
-G --> J[is_current = true]
+```mermaid
+flowchart TD
+A[ExtractSource] --> B[LoadStaging]
+B --> C[TransformWarehouse]
+C --> D[DataQualityCheck]
+D --> E[ServeMart]
+E --> F[NotifySuccess]
+```
+
 Penjelasan tiap layer:
 
 1. ExtractSource
